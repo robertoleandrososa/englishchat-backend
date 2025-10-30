@@ -5,5 +5,13 @@
       "runtime": "nodejs20.x",
       "maxDuration": 10
     }
-  }
+  },
+  "builds": [
+    { "src": "api/englishchat.js", "use": "@vercel/node" },
+    { "src": "public/**/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ]
 }
