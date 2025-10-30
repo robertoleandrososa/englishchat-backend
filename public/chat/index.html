@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Free Conversation · Chat IA</title>
+<style>
+  :root{ --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#94a3b8; --blue:#1d4ed8; --shadow:0 10px 30px rgba(0,0,0,.35); }
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+  .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+  .chat{display:flex;flex-direction:column;gap:10px;height:56vh;overflow:auto;padding:10px;background:#0b1220;border:1px solid #1f2a44;border-radius:16px}
+  .msg{max-width:84%;padding:10px 12px;border-radius:14px;line-height:1.35;white-space:pre-wrap}
+  .you{align-self:flex-end;background:#15315e}
+  .bot{align-self:flex-start;background:#142433}
+  .composer{display:flex;gap:8px;margin-top:10px}
+  .composer input{flex:1;background:#0b1220;border:1px solid #2a3c60;border-radius:12px;padding:10px 12px;color:var(--ink)}
+  button{background:var(--blue);border:1px solid var(--blue);color:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card"><h2>Free Conversation · Conversación Libre</h2></div>
+  <div id="chat" class="chat card" aria-live="polite"></div>
+  <div class="composer">
+    <input id="input" type="text" placeholder="Type your message…" />
+    <button type="button" onclick="onSend()">Send</button>
+  </div>
+</div>
+<script>
+const BACKEND_URL = "https://TU-DOMINIO.vercel.app/api/englishchat";
+
+function add(role, text){
+  const c=document.getElementById('chat'); const e=document.createElement('div');
+  e.className='msg '+(role==='user'?'you':'bot'); e.textContent=text; c.appendChild(e);
+  c.scrollTop=c.scrollHeight;
+}
+
+async function onSend(){
+  const i=document.getElementById('input'); const t=i.value.trim(); if(!t) return;
+  i.value=''; add('user', t);
+  try{
+    const r = await fetch(BACKEND_URL, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ topic:'travel', history:[{role:'user', content:t}] })
+    });
+    const d = await r.json();
+    add('bot', d.reply || '…');
+  }catch(err){ add('bot','⚠️ '+(err.message||err)); }
+}
+</script>
+</body>
+</html>
