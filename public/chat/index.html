@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Modo Conversación Libre · Chat IA (EN)</title>
+<style>
+  :root{ --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#94a3b8; --blue:#1d4ed8; --green:#10b981; --red:#ef4444; --accent:#0b3a82; --chip:#1f2937; --shadow:0 10px 30px rgba(0,0,0,.35); }
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+  .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+  .header{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);border-radius:16px;padding:12px 10px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  .flag{font-size:22px}
+  h1{margin:0;font-size:20px}
+  .sub{margin-top:6px;text-align:center;color:#dbeafe;font-size:13px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:12px 0}
+  .left, .right{display:flex;gap:8px;align-items:center}
+  select, button, input[type="text"]{background:#0b1220;color:var(--ink);border:1px solid #2a3c60;border-radius:12px;padding:10px 12px}
+  select{min-width:220px}
+  button{cursor:pointer}
+  button.primary{background:var(--blue);border-color:var(--blue)}
+  button.ghost{background:#0b1220}
+  .streak{background:#0b1220;border:1px dashed #29426b;padding:8px 10px;border-radius:12px;color:var(--muted);font-size:12px}
+  .chat{display:flex;flex-direction:column;gap:10px;height:56vh;overflow:auto;padding:10px;background:#0b1220;border:1px solid #1f2a44;border-radius:16px}
+  .msg{max-width:84%;padding:10px 12px;border-radius:14px;line-height:1.35;white-space:pre-wrap}
+  .you{align-self:flex-end;background:#15315e}
+  .bot{align-self:flex-start;background:#142433}
+  .meta{font-size:12px;color:var(--muted);margin-top:6px}
+  .fb{margin-top:8px;border-left:3px solid var(--green);padding:8px 10px;background:#0f1d2c;border-radius:10px}
+  .fb h4{margin:0 0 6px 0;font-size:12px;color:#a7f3d0}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .chip{background:var(--chip);border:1px solid #2b3c54;border-radius:999px;padding:4px 10px;font-size:12px;color:#cbd5e1}
+  .composer{display:flex;gap:8px;margin-top:10px}
+  .composer input{flex:1}
+  .small{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header card">
+    <div class="flag">🇺🇸</div>
+    <h1>Free Conversation · Conversación Libre</h1>
+    <div class="flag">🇪🇸</div>
+  </div>
+  <p class="sub">Speak with a native-like bot. Get grammar tips, alternative phrasing and pronunciation help.</p>
+  <div class="toolbar">
+    <div class="left">
+      <label for="topic" class="small">Topic / Tema</label>
+      <select id="topic">
+        <option value="travel">✈️ Travel</option>
+        <option value="work">👨‍💼 Work</option>
+        <option value="family">🏠 Family</option>
+        <option value="restaurant">🍽️ Restaurant</option>
+        <option value="school">🎓 School</option>
+      </select>
+      <button id="resetBtn" class="ghost" title="Clear chat" type="button">🧹 Reset</button>
+    </div>
+    <div class="right">
+      <span class="streak" id="stats">Messages: 0 · Accuracy: —</span>
+    </div>
+  </div>
+  <div id="chat" class="chat card" aria-live="polite"></div>
+  <div class="composer">
+    <input id="input" type="text" placeholder="Type your message in English… / Habla y luego corrige" />
+    <button id="speakBtn" title="Speak" type="button">🎤 Speak</button>
+    <button id="listenBtn" title="Listen last bot message" class="ghost" type="button">🔊 Listen</button>
+    <button id="sendBtn" class="primary" type="button" onclick="onSend()">Send</button>
+  </div>
+  <p class="small">Tip: You can speak in English and the app will transcribe your voice. The bot replies in English and gives you feedback.</p>
+</div>
+<script>
+const BACKEND_URL = 'https://englishchat-backend.vercel.app/api/englishchat';
+let state = { topic: 'travel', messages: [], msgCount: 0, lastBotText: '' };
+function addMsg(role, text, feedback){ const c=document.getElementById('chat'); const e=document.createElement('div'); e.className='msg '+(role==='user'?'you':'bot'); e.textContent=text; c.appendChild(e); if(feedback){ const f=document.createElement('div'); f.className='fb'; f.innerHTML=`<h4>Feedback</h4><div>${feedback.grammar||''}</div><div class='meta'><b>Alt:</b> ${feedback.alt||''}</div>`; c.appendChild(f);} c.scrollTop=c.scrollHeight; }
+async function onSend(){ const i=document.getElementById('input'); const t=i.value.trim(); if(!t)return; i.value=''; addMsg('user',t); try{ const r=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:'travel',history:[{role:'user',content:t}]})}); const d=await r.json(); addMsg('bot',d.reply||'…',{grammar:d.grammar,alt:d.alt}); }catch(e){ addMsg('bot','⚠️ Error: '+e.message); } }
+</script>
+</body>
+</html>
