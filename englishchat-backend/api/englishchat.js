@@ -1,21 +1,15 @@
 // api/englishchat.js
-// Backend serverless para Vercel: Chat IA tutor de inglés con salida JSON estructurada
-// Requiere variable de entorno OPENAI_API_KEY en Vercel → Project → Settings → Environment Variables
+// Serverless en Vercel. Requiere OPENAI_API_KEY en Settings → Environment Variables
 
 export default async function handler(req, res) {
-  // --- CORS (necesario si llamás desde tu app/web) ---
-  res.setHeader('Access-Control-Allow-Origin', '*'); // o poné tu dominio de GoodBarber
+  // CORS
+  res.setHeader('Access-Control-Allow-Origin', '*'); // si querés, poné tu dominio de GoodBarber
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
@@ -33,21 +27,19 @@ Constraints:
 - score: integer 60-95 estimating correctness/pronunciation (text-based approximation).
 Return only a pure JSON object. No markdown.`;
 
-    // Construimos el historial en formato Chat Completions
     const msgs = [
       { role: 'system', content: systemPrompt },
-      ...((history || []).map(m => ({
+      ...(Array.isArray(history) ? history : []).map(m => ({
         role: m.role === 'assistant' ? 'assistant' : 'user',
         content: String(m.content || '')
-      }))),
+      })),
       { role: 'user', content: 'Now respond in JSON as specified.' }
     ];
 
-    // Llamada a OpenAI (modelo económico y rápido)
     const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -60,19 +52,16 @@ Return only a pure JSON object. No markdown.`;
 
     if (!aiRes.ok) {
       const detail = await aiRes.text();
-      res.status(500).json({ error: 'OpenAI error', detail });
-      return;
+      return res.status(500).json({ error: 'OpenAI error', detail });
     }
 
     const aiJson = await aiRes.json();
     const content = aiJson?.choices?.[0]?.message?.content || '{}';
 
-    // Parseo robusto
     let payload;
     try { payload = JSON.parse(content); }
     catch { payload = { reply: content }; }
 
-    // Sanitizado / límite de campos
     const out = {
       reply: String(payload.reply || 'Okay.'),
       grammar: payload.grammar ? String(payload.grammar) : null,
@@ -85,8 +74,8 @@ Return only a pure JSON object. No markdown.`;
         : undefined
     };
 
-    res.status(200).json(out);
+    return res.status(200).json(out);
   } catch (err) {
-    res.status(500).json({ error: 'Server error', detail: String(err) });
+    return res.status(500).json({ error: 'Server error', detail: String(err) });
   }
 }
