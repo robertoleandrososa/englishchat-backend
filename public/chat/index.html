@@ -5,49 +5,155 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Free Conversation · Chat IA</title>
 <style>
-  :root{ --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#94a3b8; --blue:#1d4ed8; --shadow:0 10px 30px rgba(0,0,0,.35); }
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  :root{
+    --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9aa5b1;
+    --blue:#2563eb; --line:#1f2a44; --bubble:#142034; --you:#173763;
+    --shadow:0 10px 28px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:980px;margin:0 auto;padding:18px}
-  .card{background:var(--card);border-radius:18px;box-shadow:var(--shadow);padding:16px}
-  .chat{display:flex;flex-direction:column;gap:10px;height:56vh;overflow:auto;padding:10px;background:#0b1220;border:1px solid #1f2a44;border-radius:16px}
-  .msg{max-width:84%;padding:10px 12px;border-radius:14px;line-height:1.35;white-space:pre-wrap}
-  .you{align-self:flex-end;background:#15315e}
-  .bot{align-self:flex-start;background:#142433}
-  .composer{display:flex;gap:8px;margin-top:10px}
-  .composer input{flex:1;background:#0b1220;border:1px solid #2a3c60;border-radius:12px;padding:10px 12px;color:var(--ink)}
-  button{background:var(--blue);border:1px solid var(--blue);color:#fff;border-radius:12px;padding:10px 12px;cursor:pointer}
+  .header{display:flex;align-items:center;gap:10px;background:var(--card);
+    border-radius:16px;padding:14px 16px;box-shadow:var(--shadow)}
+  .title{font-weight:800;letter-spacing:.2px}
+  .muted{color:var(--muted);font-size:13px}
+  .board{margin-top:12px;background:#0b1220;border:1px solid var(--line);
+    border-radius:16px;box-shadow:var(--shadow);padding:10px;height:60vh;overflow:auto}
+  .msg{max-width:85%;padding:10px 12px;border-radius:14px;line-height:1.38;
+    white-space:pre-wrap;word-wrap:break-word}
+  .msg.user{background:var(--you);align-self:flex-end}
+  .msg.bot{background:var(--bubble);align-self:flex-start}
+  .stream{display:flex;flex-direction:column;gap:10px}
+  .composer{display:flex;gap:8px;margin-top:12px}
+  .input{flex:1;background:#0b1220;border:1px solid var(--line);
+    border-radius:12px;color:var(--ink);padding:12px}
+  button{background:var(--blue);border:1px solid var(--blue);color:#fff;
+    border-radius:12px;padding:12px 14px;cursor:pointer;font-weight:600}
+  button[disabled]{opacity:.6;cursor:not-allowed}
+  .row{display:flex;gap:10px;align-items:center;margin-top:10px}
+  .select{background:#0b1220;border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:8px}
+  .error{margin-top:8px;color:#fca5a5;font-size:13px}
+  @media (max-width:560px){
+    .header{flex-direction:column;align-items:flex-start}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card"><h2>Free Conversation · Conversación Libre</h2></div>
-  <div id="chat" class="chat card" aria-live="polite"></div>
-  <div class="composer">
-    <input id="input" type="text" placeholder="Type your message…" />
-    <button type="button" onclick="onSend()">Send</button>
+  <div class="wrap">
+    <div class="header">
+      <div class="title">🗣️ Free Conversation · Conversación Libre</div>
+      <div class="muted">Práctica guiada: el bot corrige y sugiere alternativas.</div>
+    </div>
+
+    <div class="row">
+      <label class="muted">Tema</label>
+      <select id="topic" class="select">
+        <option value="travel" selected>Travel</option>
+        <option value="work">Work</option>
+        <option value="family">Family</option>
+        <option value="shopping">Shopping</option>
+        <option value="food">Food</option>
+      </select>
+      <button id="resetBtn" type="button">Reset</button>
+    </div>
+
+    <div class="board">
+      <div id="stream" class="stream"></div>
+    </div>
+
+    <div class="composer">
+      <input id="input" class="input" type="text"
+             placeholder="Escribe en inglés… (Enter para enviar)" />
+      <button id="sendBtn" type="button">Send</button>
+    </div>
+    <div id="err" class="error" role="status" aria-live="polite"></div>
   </div>
-</div>
+
 <script>
-const BACKEND_URL = "https://TU-DOMINIO.vercel.app/api/englishchat";
+  // 🔗 Cambia solo si usas otro dominio principal en Vercel
+  const BACKEND_URL = "https://englishchat-backend.vercel.app/api/englishchat";
 
-function add(role, text){
-  const c=document.getElementById('chat'); const e=document.createElement('div');
-  e.className='msg '+(role==='user'?'you':'bot'); e.textContent=text; c.appendChild(e);
-  c.scrollTop=c.scrollHeight;
-}
+  const $ = (id) => document.getElementById(id);
+  const stream = $("stream");
+  const input = $("input");
+  const sendBtn = $("sendBtn");
+  const resetBtn = $("resetBtn");
+  const errBox = $("err");
+  const topicSel = $("topic");
 
-async function onSend(){
-  const i=document.getElementById('input'); const t=i.value.trim(); if(!t) return;
-  i.value=''; add('user', t);
-  try{
-    const r = await fetch(BACKEND_URL, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ topic:'travel', history:[{role:'user', content:t}] })
-    });
-    const d = await r.json();
-    add('bot', d.reply || '…');
-  }catch(err){ add('bot','⚠️ '+(err.message||err)); }
-}
+  /** Historial mínimo para enviar contexto */
+  let history = [];
+
+  function add(role, text){
+    const div = document.createElement("div");
+    div.className = "msg " + (role === "user" ? "user" : "bot");
+    div.textContent = text;
+    stream.appendChild(div);
+    stream.parentElement.scrollTop = stream.parentElement.scrollHeight;
+  }
+
+  function setBusy(b){
+    sendBtn.disabled = b;
+    input.disabled = b;
+  }
+
+  async function send(){
+    const text = input.value.trim();
+    if(!text) return;
+    input.value = "";
+    errBox.textContent = "";
+    add("user", text);
+    setBusy(true);
+
+    try{
+      // mantenemos 6 últimos turnos como contexto liviano
+      history.push({role:"user", content:text});
+      history = history.slice(-6);
+
+      const r = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: topicSel.value,
+          history
+        })
+      });
+
+      const data = await r.json();
+      if(!r.ok){
+        add("bot", "⚠️ Error del servidor.");
+        errBox.textContent = data?.detail || JSON.stringify(data);
+      }else{
+        const reply = data?.reply || "…";
+        add("bot", reply);
+        history.push({role:"assistant", content: reply});
+        history = history.slice(-6);
+      }
+    }catch(e){
+      add("bot","⚠️ Conexión fallida.");
+      errBox.textContent = e?.message || String(e);
+    }finally{
+      setBusy(false);
+      input.focus();
+    }
+  }
+
+  // UI events
+  sendBtn.addEventListener("click", send);
+  input.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  resetBtn.addEventListener("click", ()=>{
+    history = [];
+    stream.innerHTML = "";
+    errBox.textContent = "";
+    add("bot", "Hi! Let's practice. Choose a topic and type a message.");
+  });
+
+  // Mensaje inicial
+  add("bot", "Hi! Let's practice. Choose a topic and type a message.");
 </script>
 </body>
 </html>
