@@ -3,47 +3,55 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Chat IA Premium · Conversación Guiada</title>
+<title>Chat IA Premium v2 · Conversación Guiada</title>
 <style>
   :root{
-    --bg:#0f172a; --card:#0b1220; --panel:#111827; --ink:#e5e7eb; --muted:#94a3b8;
-    --ok:#10b981; --warn:#f59e0b; --bad:#ef4444; --blue:#1d4ed8; --line:#1f2a44;
-    --bubble:#142034; --you:#173763; --shadow:0 12px 32px rgba(0,0,0,.35);
+    --bg:#0f172a; --panel:#0b1220; --ink:#e5e7eb; --muted:#94a3b8;
+    --ok:#10b981; --warn:#f59e0b; --bad:#ef4444; --blue:#2563eb; --line:#1f2a44;
+    --bubble:#151f33; --you:#173763; --chip:#0e1a2d; --shadow:0 12px 32px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:980px;margin:0 auto;padding:18px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
   .header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px}
   .title{display:flex;gap:10px;align-items:center;font-weight:800}
   .flags{font-size:22px}
   .controls{display:flex;flex-wrap:wrap;gap:8px}
-  select,button,input[type="range"],input[type="text"]{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  select,button,input[type="range"],input[type="text"]{background:#0a1425;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
   select{min-width:180px}
-  .board{margin-top:12px;padding:10px}
-  .stream{display:flex;flex-direction:column;gap:10px;height:58vh;overflow:auto;padding:10px;background:var(--card);border:1px solid var(--line);border-radius:16px}
-  .msg{max-width:85%;padding:10px 12px;border-radius:14px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
-  .msg.user{background:var(--you);align-self:flex-end}
-  .msg.bot{background:var(--bubble);align-self:flex-start}
-  .feedback{border-left:3px solid var(--ok);background:#0f1f2f;padding:8px 10px;border-radius:12px}
-  .row{display:flex;gap:10px;align-items:center;margin-top:10px}
-  .composer{display:flex;gap:8px;margin-top:12px}
+  .board{margin-top:12px;padding:12px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .stream{display:flex;flex-direction:column;gap:10px;height:55vh;overflow:auto;padding:12px;background:#081227;border:1px solid var(--line);border-radius:16px}
+  .row{display:flex;gap:10px;align-items:flex-end}
+  .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#0e1b32;border:1px solid #1d2b48;font-size:18px;flex:0 0 34px}
+  .msg{max-width:78%;padding:10px 12px;border-radius:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;background:var(--bubble)}
+  .me{margin-left:auto}.me .msg{background:var(--you)}
+  .meta{display:flex;gap:10px;align-items:center}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--chip);border:1px solid var(--line);padding:8px 10px;border-radius:999px;font-size:13px;cursor:pointer}
+  .composer{display:flex;gap:8px}
   .input{flex:1}
   .btn{background:var(--blue);border:1px solid var(--blue);color:#fff;border-radius:12px;padding:12px 14px;cursor:pointer;font-weight:700}
-  .btn.ghost{background:var(--card);color:var(--ink);border-color:var(--line)}
+  .btn.ghost{background:#0a1425;color:var(--ink);border-color:var(--line)}
   .btn[disabled]{opacity:.6;cursor:not-allowed}
   .small{font-size:12px;color:var(--muted)}
-  .meters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .meter{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:12px;color:var(--muted)}
+  .meters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .meter{background:#0a1425;border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:12px;color:var(--muted)}
+  .feedback{border-left:3px solid var(--ok);background:#0f2136;padding:8px 10px;border-radius:12px;margin-top:6px}
   .error{margin-top:8px;color:#fca5a5;font-size:13px}
-  @media (max-width:640px){ .controls{flex-direction:column;align-items:stretch} }
+  .typing{display:inline-block;width:30px}
+  .dot{width:6px;height:6px;margin:0 2px;background:#9fb3d5;border-radius:50%;display:inline-block;animation:blink 1.4s infinite both}
+  .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+  @media (max-width:640px){ .controls{flex-direction:column;align-items:stretch} .msg{max-width:86%}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <section class="card header">
-    <div class="title"><span class="flags">🇺🇸</span> Chat IA Premium · Conversación Guiada <span class="flags">🇪🇸</span></div>
+    <div class="title"><span class="flags">🇺🇸</span> Chat IA Premium v2 · Conversación Guiada <span class="flags">🇪🇸</span></div>
     <div class="controls">
       <select id="level" title="Nivel">
         <option value="beginner" selected>Beginner</option>
@@ -63,6 +71,7 @@
         <option value="opinions">🧠 Small Talk & Opinions</option>
       </select>
       <button id="resetBtn" class="btn ghost" type="button">🧹 Reset</button>
+      <button id="clearBtn" class="btn ghost" type="button" title="Olvidar historial local">🗑️ Clear</button>
     </div>
   </section>
 
@@ -70,39 +79,44 @@
     <div class="meters">
       <div id="statTurns" class="meter">Turns: 0</div>
       <div id="statScore" class="meter">Last score: —</div>
-      <div id="ttsState" class="meter">TTS: ready</div>
-      <div id="sttState" class="meter">Mic: —</div>
+      <div id="usage" class="meter">Context: 0 msgs</div>
     </div>
+
     <div id="stream" class="stream" aria-live="polite"></div>
 
-    <div class="composer">
-      <input id="input" class="input" type="text" placeholder="Type your message in English… (Enter to send)" />
+    <div class="chips" id="chips"></div>
+
+    <div class="composer" style="margin-top:8px">
+      <input id="input" class="input" type="text" placeholder="Type your message in English… (Enter)" />
       <button id="micBtn" class="btn ghost" type="button" title="Speak">🎤</button>
       <button id="listenBtn" class="btn ghost" type="button" title="Listen last bot message">🔊</button>
       <button id="sendBtn" class="btn" type="button">Send</button>
     </div>
-    <div class="row small">TTS rate <input id="rate" type="range" min="0.6" max="1.4" step="0.1" value="1"/> · Voice: <select id="voiceSel"></select></div>
+    <div class="small" style="margin-top:6px">TTS rate <input id="rate" type="range" min="0.6" max="1.4" step="0.1" value="1"/> · Voice: <select id="voiceSel"></select></div>
+
     <div id="err" class="error" role="status" aria-live="polite"></div>
   </section>
 </div>
 
 <script>
-  // Cambiá este dominio si usás otro en Vercel (Settings → Domains)
+  // 🔗 Cambia al dominio principal de tu proyecto en Vercel SOLO si es distinto
   const BACKEND_URL = "https://englishchat-backend.vercel.app/api/englishchat";
+  const STORAGE_KEY = 'chat-ia-premium-history-v2';
 
   const $ = (id)=>document.getElementById(id);
   const stream = $("stream");
+  const chips = $("chips");
   const input = $("input");
   const sendBtn = $("sendBtn");
   const listenBtn = $("listenBtn");
   const micBtn = $("micBtn");
   const resetBtn = $("resetBtn");
+  const clearBtn = $("clearBtn");
   const topicSel = $("topic");
   const levelSel = $("level");
   const statTurns = $("statTurns");
   const statScore = $("statScore");
-  const ttsState = $("ttsState");
-  const sttState = $("sttState");
+  const usage = $("usage");
   const errBox = $("err");
   const rate = $("rate");
   const voiceSel = $("voiceSel");
@@ -111,116 +125,106 @@
   let turns = 0;
   let lastBot = '';
 
-  // UI helpers
-  function add(role, text, feedback){
-    const bubble = document.createElement('div');
-    bubble.className = 'msg ' + (role==='user'?'user':'bot');
-    bubble.textContent = text;
-    stream.appendChild(bubble);
-    if(feedback && (feedback.grammar || feedback.alt)){
-      const fb = document.createElement('div');
-      fb.className = 'feedback small';
-      fb.innerHTML = `<strong>Feedback</strong><br>${feedback.grammar||''}${feedback.grammar&&feedback.alt?'<br>':''}<em>${feedback.alt||''}</em>`;
-      stream.appendChild(fb);
-    }
-    stream.parentElement.scrollTop = stream.parentElement.scrollHeight;
+  // ===== Helpers =====
+  function bubble(role, text, withAvatar=true){
+    const row = document.createElement('div');
+    row.className = 'row' + (role==='user'? ' me' : '');
+    const av = document.createElement('div');
+    av.className = 'av';
+    av.textContent = role==='user' ? '🙂' : '🤖';
+    const msg = document.createElement('div');
+    msg.className = 'msg';
+    msg.textContent = text;
+    if(withAvatar){ row.appendChild(av); }
+    row.appendChild(msg);
+    stream.appendChild(row);
+    stream.scrollTop = stream.scrollHeight;
+    return msg;
   }
-  function busy(v){ sendBtn.disabled=v; input.disabled=v; micBtn.disabled=v; listenBtn.disabled=v; }
+  function feedback(gram, alt){
+    if(!(gram||alt)) return;
+    const box = document.createElement('div');
+    box.className = 'feedback';
+    box.innerHTML = `<strong>Feedback</strong>${gram?'<br>'+gram:''}${alt?'<br><em>'+alt+'</em>':''}`;
+    stream.appendChild(box);
+    stream.scrollTop = stream.scrollHeight;
+  }
+  function setBusy(b){ sendBtn.disabled=b; input.disabled=b; micBtn.disabled=b; listenBtn.disabled=b; }
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({history,turns,lastBot})); }
+  function load(){ try{ const j=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); if(j.history) history=j.history; if(j.turns) turns=j.turns; if(j.lastBot) lastBot=j.lastBot; }catch{} }
+  function refreshUsage(){ usage.textContent = 'Context: ' + history.length + ' msgs'; }
 
-  // ===== Speech Synthesis (TTS) =====
-  let voices = [];
+  // ===== Quick replies =====
+  function renderChips(list){
+    chips.innerHTML='';
+    (list||[]).slice(0,6).forEach(t=>{
+      const c=document.createElement('button');
+      c.className='chip'; c.type='button'; c.textContent=t;
+      c.onclick=()=>{ input.value=t; send(); };
+      chips.appendChild(c);
+    });
+  }
+
+  // ===== TTS =====
+  let voices=[];
   function loadVoices(){
     voices = speechSynthesis.getVoices().filter(v=>/en-|English/i.test(v.lang));
     voiceSel.innerHTML = voices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
-    if(!voices.length){ ttsState.textContent = 'TTS: not available'; }
   }
-  if('speechSynthesis' in window){
-    window.speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
-  } else { ttsState.textContent = 'TTS: not supported'; }
+  if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=loadVoices; loadVoices(); }
+  function speak(text){ if(!('speechSynthesis' in window)) return; const u=new SpeechSynthesisUtterance(text); const v=voices[voiceSel.selectedIndex]||voices[0]; if(v) u.voice=v; u.rate=parseFloat(rate.value||'1'); speechSynthesis.cancel(); speechSynthesis.speak(u); }
+  listenBtn.addEventListener('click',()=>{ if(lastBot) speak(lastBot); });
 
-  function speak(text){
-    if(!('speechSynthesis' in window)) return;
-    const u = new SpeechSynthesisUtterance(text);
-    const v = voices[voiceSel.selectedIndex] || voices[0];
-    if(v) u.voice = v; u.rate = parseFloat(rate.value||'1');
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  // ===== STT (Chrome/Edge) =====
+  let rec; let sttOK=false;
+  if('webkitSpeechRecognition' in window){ const R=window.webkitSpeechRecognition; rec=new R(); rec.lang='en-US'; rec.continuous=false; rec.interimResults=false; sttOK=true; }
+  micBtn.addEventListener('click',()=>{ if(!sttOK){ errBox.textContent='Mic not supported here. Try Chrome on Android/Windows.'; return; } errBox.textContent=''; try{ rec.start(); micBtn.textContent='⏺️'; }catch{} });
+  if(sttOK){ rec.onresult=(e)=>{ input.value=e.results[0][0].transcript; send(); }; rec.onend=()=>{ micBtn.textContent='🎤'; }; }
+
+  // ===== Typing indicator =====
+  function typingOn(){
+    const row=document.createElement('div'); row.className='row';
+    const av=document.createElement('div'); av.className='av'; av.textContent='🤖';
+    const msg=document.createElement('div'); msg.className='msg';
+    msg.innerHTML='<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>';
+    row.appendChild(av); row.appendChild(msg); stream.appendChild(row); stream.scrollTop=stream.scrollHeight; return row;
   }
-  listenBtn.addEventListener('click', ()=>{ if(lastBot) speak(lastBot); });
+  function typingOff(node){ if(node&&node.parentNode) node.parentNode.removeChild(node); }
 
-  // ===== Speech Recognition (STT) =====
-  let rec; let sttSupported = false;
-  if('webkitSpeechRecognition' in window){
-    const R = window.webkitSpeechRecognition;
-    rec = new R(); rec.lang = 'en-US'; rec.continuous = false; rec.interimResults = false; sttSupported = true;
-    sttState.textContent = 'Mic: ready';
-    rec.onresult = (e)=>{ const t = e.results[0][0].transcript; input.value = t; send(); };
-    rec.onerror = ()=>{ sttState.textContent = 'Mic: error'; };
-    rec.onend = ()=>{ micBtn.textContent='🎤'; sttState.textContent='Mic: ready'; };
-  } else {
-    sttState.textContent = 'Mic: not supported';
-  }
-  micBtn.addEventListener('click', ()=>{
-    if(!sttSupported){ errBox.textContent = 'El micrófono no es compatible en este navegador. Usa Chrome en Android/Windows.'; return; }
-    errBox.textContent = '';
-    try{ micBtn.textContent = '⏺️'; rec.start(); sttState.textContent = 'Mic: listening…'; }
-    catch(_){ sttState.textContent = 'Mic: permission?'; }
-  });
-
-  // ===== Send to backend =====
+  // ===== Send logic =====
   async function send(){
-    const text = input.value.trim();
-    if(!text) return;
+    const text=input.value.trim(); if(!text) return;
     input.value=''; errBox.textContent='';
-    add('user', text);
-    busy(true);
+    bubble('user', text);
+    setBusy(true);
 
-    // recortar contexto según nivel para optimizar tokens
-    const keep = levelSel.value==='advanced' ? 10 : (levelSel.value==='intermediate'? 8 : 6);
-    history.push({role:'user', content:text});
-    history = history.slice(-keep);
+    const keep = levelSel.value==='advanced'? 12 : (levelSel.value==='intermediate'? 8 : 6);
+    history.push({role:'user', content:text}); history=history.slice(-keep);
+    refreshUsage(); save();
 
+    const typing = typingOn();
     try{
-      const res = await fetch(BACKEND_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          topic: topicSel.value,
-          level: levelSel.value,
-          history
-        })
-      });
-      const data = await res.json();
-      if(!res.ok){
-        const detail = data?.detail || JSON.stringify(data);
-        add('bot','⚠️ Provider error.');
-        errBox.textContent = detail;
-      } else {
-        const reply = String(data.reply || '…');
-        lastBot = reply;
-        add('bot', reply, {grammar:data.grammar, alt:data.alt});
-        if(data.score!=null){ statScore.textContent = 'Last score: ' + data.score; }
-        if('speechSynthesis' in window) speak(reply);
-        history.push({role:'assistant', content: reply});
-        history = history.slice(-keep);
-        turns++; statTurns.textContent = 'Turns: ' + turns;
-      }
-    }catch(e){
-      add('bot','⚠️ Conexión fallida.');
-      errBox.textContent = e?.message || String(e);
-    }finally{
-      busy(false); input.focus();
-    }
+      const r=await fetch(BACKEND_URL,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ topic:topicSel.value, level:levelSel.value, history }) });
+      const data=await r.json();
+      typingOff(typing);
+      if(!r.ok){ bubble('bot','⚠️ Provider error.'); errBox.textContent=data?.detail||JSON.stringify(data); return; }
+      const reply=String(data.reply||'…'); lastBot=reply; bubble('bot', reply); feedback(data.grammar, data.alt);
+      if(Array.isArray(data.keywords)) renderChips(data.keywords);
+      if('speechSynthesis' in window) speak(reply);
+      history.push({role:'assistant', content:reply}); history=history.slice(-keep);
+      turns++; statTurns.textContent='Turns: '+turns; if(data.score!=null) statScore.textContent='Last score: '+data.score;
+      refreshUsage(); save();
+    }catch(e){ typingOff(typing); bubble('bot','⚠️ Network error.'); errBox.textContent=e?.message||String(e); }
+    finally{ setBusy(false); input.focus(); }
   }
 
   sendBtn.addEventListener('click', send);
   input.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
-  resetBtn.addEventListener('click', ()=>{
-    history=[]; turns=0; statTurns.textContent='Turns: 0'; statScore.textContent='Last score: —';
-    stream.innerHTML=''; add('bot','Hi! Choose a topic and level, then start typing or tap the mic.');
-  });
+  resetBtn.addEventListener('click', ()=>{ history=[]; turns=0; statTurns.textContent='Turns: 0'; statScore.textContent='Last score: —'; stream.innerHTML=''; chips.innerHTML=''; lastBot=''; save(); bubble('bot','Hi! Choose a topic and level, then start typing or tap the mic.'); refreshUsage(); });
+  clearBtn.addEventListener('click', ()=>{ localStorage.removeItem(STORAGE_KEY); history=[]; turns=0; stream.innerHTML=''; chips.innerHTML=''; statTurns.textContent='Turns: 0'; statScore.textContent='Last score: —'; lastBot=''; bubble('bot','Memory cleared. Start again!'); });
 
-  // Mensaje inicial
-  add('bot','Hi! Choose a topic and level, then start typing or tap the mic.');
+  // ===== Init =====
+  load(); bubble('bot','Hi! Choose a topic and level, then start typing or tap the mic.'); if(history.length){ refreshUsage(); statTurns.textContent='Turns: '+(turns||0); }
 </script>
 </body>
 </html>
